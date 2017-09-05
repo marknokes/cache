@@ -12,7 +12,7 @@ class Cache
     private $time = 0;
 
     /**
-    * Timestamp representing the last time the feed was retrieved. This value is stored in the cache with the content
+    * Timestamp representing the last time the content was retrieved. This value is stored in the cache with the content
     *
     * @var int
     */
@@ -41,14 +41,14 @@ class Cache
     private $cache_type = "";
 
     /**
-    * Should the feed be cached? This option should be set in the feed HTML as a data parameter, i.e., no-cache="true"
+    * Should the content be cached? This option should be set in the content HTML as a data parameter, i.e., no-cache="true"
     *
     * @var bool 
     */
 	private $no_cache = false;
 
 	/**
-    * Should the feed be cached? This option should be set in the feed HTML as a data parameter, i.e., no-cache="true"
+    * Should the content be cached? This option should be set in the content HTML as a data parameter, i.e., no-cache="true"
     *
     * @var bool 
     */
@@ -311,7 +311,7 @@ class Cache
 	}
 
 	/**
- 	* Retrieve feed data from database, file cache, or real time depending on configuration
+ 	* Retrieve content data from database, file cache, or real time depending on configuration
  	* 
  	* @return null
  	*/
@@ -338,7 +338,7 @@ class Cache
 
     	$this->last_run = isset( $this->data->last_run ) ? $this->data->last_run : 0;
 
-    	$this->info =  isset( $this->data->last_run ) && !$this->no_cache ? date("Y-m-d h:i A", $this->data->last_run) . " using " . $this->cache_type . " storage" : "";
+    	$this->info =  isset( $this->data->last_run ) && !$this->no_cache ? date("Y-m-d h:i A", $this->data->last_run) . " using " . $this->cache_type . " storage" : "Content not retrieved from cache.";
 
     	return isset( $this->data->cache_content ) ? $this->data->cache_content : "Error retrieving content from cache";
     }
