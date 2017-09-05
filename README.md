@@ -1,25 +1,38 @@
-# Easier RSS
+# cache
 
-Add RSS feeds to your website. Supports SQL server, wincache, or file caching
+A simple cache solution written in PHP
 
 ## To get started:
 
-* Copy the javascript from the bottom of the index-sample.html and place in your common/main javascript file. Be sure that you have the latest jQuery library loaded first
-* Go through the config-sample.php very carefully to determine the options you would like. 
-* Rename config-sample.php to config.php
-* If you're not using SQL server for persistance, remove the config options for the database. If you are, find a nice place for your db-config.ini and edit config.php accordingly.
-* If you're planning on using the default file caching method, be sure your server has permission to write to the cache file location. If you don't want to cache at all, set data-no-cache="true" on the container.
+* Include Cache.php and the cache config file (whatever you named it) into your project
+* Instantiate the class with the config array
+* Set content equal to the return value of the get_cached_content() method
+* Check if the cache is expired. If so, get your content and cache it.
+* Display your content
+
 
 ## Example
-```html
-<div class="easier-rss-feed some-custom-class"
-		 data-feed-url="https://somedomain.com/rss/"
-		 data-domain=""
-		 data-no-cache="false"
-		 data-force-update-cache="false"
-		 data-max-num="3"
-		 data-show-description="1"
-		 data-display-images="true"></div>
+```php
+// Set up the cache
+$cache = new uco\Cache( $config );
+
+// Get content from cache (if exists)
+$cache->content = $cache->get_cached_content();
+
+// If cache is expired or cache content doesn't exist, retreive content and cache it
+if( $cache->cache_expired() )
+{
+	// Get your dynamic content here
+	$content = $someWhackyClass->get_complicated_content();
+
+	$cache->set_content( $content )->cache();
+}
+
+// Returns cache time and type
+echo $cache->info;
+
+// The content
+echo $cache->content;
 ```
 
-Happy RSS'ing!
+Happy Caching!
