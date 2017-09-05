@@ -14,7 +14,7 @@ A simple cache solution written in PHP
 ## Example
 ```php
 // Set up the cache
-$cache = new uco\Cache( $config );
+$cache = new Cache( $config );
 
 // Get content from cache (if exists)
 $cache->content = $cache->get_cached_content();
