@@ -14,7 +14,7 @@ class Cache
     *
     * @var int
     */
-    private $last_run = 0;
+    public $last_run = 0;
 
     /**
     * The content to deliver.
@@ -64,7 +64,7 @@ class Cache
 	*
 	* @var str
 	*/
-    private $cache_age = "15 minutes";
+    public $cache_age = "15 minutes";
 
     /**
 	* Prefix to be prepended to the cache filename. This option may be overridden in config.php
@@ -204,7 +204,7 @@ class Cache
  	* 
  	* @return bool True if $this->last_run is false or if the current time is greater than the timestamp + the cache age, otherwise false
  	*/
-    public function cache_expired()
+    private function cache_expired()
 	{
 		if( 0 === $this->last_run || $this->no_cache || $this->force_update_cache || !$this->data )
 
@@ -338,6 +338,6 @@ class Cache
 
     	$this->info =  isset( $this->data->last_run ) && !$this->no_cache ? date("Y-m-d h:i A", $this->data->last_run) . " using " . $this->cache_type . " storage" : "Content not retrieved from cache.";
 
-    	return isset( $this->data->cache_content ) ? $this->data->cache_content : "Error retrieving content from cache";
+    	return isset( $this->data->cache_content ) && false === $this->cache_expired() ? $this->data->cache_content : "";
     }
 }

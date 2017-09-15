@@ -17,10 +17,10 @@ A simple cache solution written in PHP. Uses wincache, SQLSVR, or filesystem (by
 $cache = new Cache( $config );
 
 // Get content from cache (if exists)
-$cache->content = $cache->get_cached_content();
+$content = $cache->get_cached_content();
 
 // If cache is expired or cache content doesn't exist, retreive content and cache it
-if( $cache->cache_expired() )
+if( !$content )
 {
 	// Get your dynamic content here
 	$content = $someWhackyClass->get_complicated_content();
@@ -32,7 +32,7 @@ if( $cache->cache_expired() )
 echo $cache->info;
 
 // The content
-echo $cache->content;
+echo $content;
 ```
 
 Happy Caching!
