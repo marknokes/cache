@@ -14,21 +14,28 @@ class Cache
     *
     * @var int
     */
-    public $last_run = 0;
+    private $last_run = 0;
+
+    /**
+    * Display a string containing date/time of current cached content.
+    *
+    * @var str
+    */
+    public $info = "";
 
     /**
     * The content to deliver.
     *
     * @var str
     */
-    public $content = "";
+    private $content = "";
 
      /**
     * The content to deliver.
     *
     * @var str
     */
-    public $cache_content = "";
+    private $cache_content = "";
 
     /**
     * Options are db and file. If a sql server db_connection object is passed into config.php, the $cache_type will be set to "db",
@@ -64,7 +71,7 @@ class Cache
 	*
 	* @var str
 	*/
-    public $cache_age = "15 minutes";
+    private $cache_age = "15 minutes";
 
     /**
 	* Prefix to be prepended to the cache filename. This option may be overridden in config.php
