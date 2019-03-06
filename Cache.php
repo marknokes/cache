@@ -102,13 +102,6 @@ class Cache
 	private $db_connection;
 
 	/**
-    * Use wincache for persistance?
-    *
-    * @var bool
-    */
-	private $wincache = false;
-
-	/**
 	* Database query formats
 	*
 	* @var array
@@ -139,21 +132,11 @@ class Cache
 
 		$hash = hash( 'md5', $this->cache_key );
 
-		if( isset( $this->db_connection ) )
-		{
-			$this->cache_type = 'db';
+		$this->id = $hash;
 
-			$this->id = $hash;
-		}
-		elseif( true === $this->wincache )
+		if( !$this->cache_type || $this->cache_type === "file" )
 		{
-			$this->cache_type = 'wincache';
-
-			$this->id = $hash;
-		}
-		else
-		{
-			$this->cache_type = 'file';
+			$this->cache_type = "file";
 
 			$this->cache_path = "" !== $this->cache_path ? $this->cache_path : sys_get_temp_dir();
 
@@ -179,6 +162,16 @@ class Cache
 	private function from_wincache()
     {
     	return wincache_ucache_exists( $this->id ) ? json_decode( wincache_ucache_get( $this->id ) ) : false;
+    }
+
+    /**
+ 	* Retrieve content from apcu
+ 	* 
+ 	* @return bool true if cache file exists and properly json decoded, false otherwise
+ 	*/
+	private function from_apcu()
+    {
+    	return apcu_exists( $this->id ) ? json_decode( apcu_fetch( $this->id ) ) : false;
     }
 
 	/**
@@ -303,6 +296,21 @@ class Cache
 				$seconds
 			);
 		}
+		elseif( "" !== $this->id && "apcu" === $this->cache_type )
+		{
+			$time = date( "00:i:s", strtotime( "+" . $this->cache_age, 0 ) );
+			
+			$seconds = strtotime("1970-01-01 $time UTC");
+			
+			return false !== apcu_store(
+				$this->id,
+				json_encode( array(
+					"last_run" 		=> $this->time,
+					"cache_content" => $this->content
+				) ),
+				$seconds
+			);
+		}
 		elseif( "" !== $this->cache_file && "file" === $this->cache_type )
 		{
 			return false !== file_put_contents(
@@ -333,6 +341,12 @@ class Cache
     		case "wincache":
 
     			$this->data = $this->from_wincache();
+
+    			break;
+
+    		case "apcu":
+
+    			$this->data = $this->from_apcu();
 
     			break;
 
