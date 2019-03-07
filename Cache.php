@@ -130,6 +130,10 @@ class Cache
 				$this->$key = $value;
 		}
 
+		if( !$this->has_cache_type_support() )
+
+			die("The $this->cache_type extension is not loaded.");
+
 		$hash = hash( 'md5', $this->cache_key );
 
 		$this->id = $hash;
@@ -142,6 +146,17 @@ class Cache
 
 			$this->cache_file = $this->cache_path . "\\" . $this->cache_prefix . $hash;
 		}
+	}
+
+	private function has_cache_type_support()
+	{
+		if( "apcu" === $this->cache_type || "wincache" === $this->cache_type )
+
+			return extension_loaded( $this->cache_type );
+
+		else
+
+			return true;
 	}
 
 	/**
