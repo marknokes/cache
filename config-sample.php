@@ -11,10 +11,9 @@ $db = new db( $db_config['ini_section'] );
 
 // Be sure to comment out or remove the caching method you don't need!
 $config = array(
-	"no_content_message" => "There are currently no items to show.",
-
-	/* file, wincache, apcu, or db */
-	"cache_type" 		 => "file", // Default is file
+	
+	/* file, wincache, apcu, sqlsrv, mysqli  */
+	"cache_type" 		 => "file",
 
 	/* Optional string in minutes, up to 59. Default is "15 minutes" */
 	"cache_age"			 => "25 minutes",

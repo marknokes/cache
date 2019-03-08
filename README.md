@@ -1,6 +1,6 @@
 # cache
 
-A simple cache solution written in PHP. Uses wincache, APCu, SQLSVR, or filesystem (by default).
+A simple cache solution written in PHP. Available caching options include  WinCache, APCu, SQLSVR, MySQLi, or file (by default).
 
 ## To get started:
 
