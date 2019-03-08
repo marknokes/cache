@@ -38,8 +38,7 @@ class Cache
     private $cache_content = "";
 
     /**
-    * Options are db and file. If a sql server db_connection object is passed into config.php, the $cache_type will be set to "db",
-    * otherwise "file" will be used
+    * Options: file, mysqli, sqlsrv, wincache, apcu
     *
     * @var str
     */
@@ -107,16 +106,24 @@ class Cache
 	* @var array
 	*/
 	private $queries = array(
-		"get" => "SELECT * FROM cache_data WHERE id = '%1\$s'",
-		"set" => "IF EXISTS (SELECT id FROM cache_data WHERE id = '%1\$s')
-					  BEGIN
-					     UPDATE cache_data SET last_run = %2\$d, cache_content = '%3\$s' WHERE id = '%1\$s'
-					  END
-				  ELSE
-					  BEGIN
-					     INSERT INTO cache_data (id, last_run, cache_content)
-					     VALUES ('%1\$s', %2\$d, '%3\$s')
-					  END"
+		"sqlsrv" => array(
+			"get" => "SELECT * FROM cache_data WHERE id = '%1\$s'",
+			"set" => "IF EXISTS (SELECT id FROM cache_data WHERE id = '%1\$s')
+						  BEGIN
+						     UPDATE cache_data SET last_run = %2\$d, cache_content = '%3\$s' WHERE id = '%1\$s'
+						  END
+					  ELSE
+						  BEGIN
+						     INSERT INTO cache_data (id, last_run, cache_content)
+						     VALUES ('%1\$s', %2\$d, '%3\$s')
+						  END"
+		),
+		"mysqli" => array(
+			"get" => "SELECT * FROM cache_data WHERE id = '%1\$s'",
+			"set" => "INSERT INTO cache_data (id, last_run, cache_content)
+					 	VALUES ('%1\$s', %2\$d, '%3\$s')
+					 	ON DUPLICATE KEY UPDATE last_run = VALUES(last_run), cache_content = VALUES(cache_content);"
+		)
 	);
 
 	public function __construct( $config )
@@ -130,10 +137,6 @@ class Cache
 				$this->$key = $value;
 		}
 
-		if( !$this->has_cache_type_support() )
-
-			die("The $this->cache_type extension is not loaded.");
-
 		$hash = hash( 'md5', $this->cache_key );
 
 		$this->id = $hash;
@@ -146,11 +149,15 @@ class Cache
 
 			$this->cache_file = $this->cache_path . "\\" . $this->cache_prefix . $hash;
 		}
+
+		if( !$this->has_cache_type_support() )
+
+			die("The $this->cache_type extension is not loaded.");
 	}
 
 	private function has_cache_type_support()
 	{
-		if( "apcu" === $this->cache_type || "wincache" === $this->cache_type )
+		if( "file" !== $this->cache_type )
 
 			return extension_loaded( $this->cache_type );
 
@@ -197,21 +204,39 @@ class Cache
  	*/
     private function do_query( $query )
     {
-		$stmt = sqlsrv_prepare( $this->db_connection, $query );
+    	if ( "sqlsrv" === $this->cache_type )
+    	{
+			$stmt = sqlsrv_prepare( $this->db_connection, $query );
 
-		if( !$stmt )
+			if( !$stmt )
 
-		    die( print_r( sqlsrv_errors(), true) );
+			    die( print_r( sqlsrv_errors(), true) );
 
-		$result = sqlsrv_execute( $stmt );
+			$result = sqlsrv_execute( $stmt );
 
-		if( $result === false )
+			if( $result === false )
 
-		  die( print_r( sqlsrv_errors(), true) );
+			  die( print_r( sqlsrv_errors(), true) );
 
-		$obj = sqlsrv_fetch_object( $stmt );
+			$obj = sqlsrv_fetch_object( $stmt );
+    	}
+    	elseif( "mysqli" === $this->cache_type )
+    	{
+			if ( $stmt = $this->db_connection->prepare( $query ) )
+			{	
+				if ( $stmt === false )
 
-		return is_object( $obj ) ? $obj : false;
+				    die( $this->db_connection->error );
+				
+				$stmt->execute();
+
+				$result = $stmt->get_result();
+
+				$obj = $result ? $result->fetch_object(): false;
+			}
+    	}
+
+    	return isset( $obj ) && is_object( $obj ) ? $obj : false;
     }
 
 	/**
@@ -287,10 +312,10 @@ class Cache
 		{
 			return false;
 		}
-		elseif( "" !== $this->id && "db" === $this->cache_type )
+		elseif( "" !== $this->id && ("sqlsrv" === $this->cache_type || "mysqli" === $this->cache_type ) )
 		{
 			return $this->do_query( sprintf(
-				$this->queries["set"],
+				$this->queries[ $this->cache_type ]["set"],
 				$this->id,
 				$this->time,
 				$this->mssql_escape_string( $this->content )
@@ -347,9 +372,10 @@ class Cache
     {
     	switch( $this->cache_type )
     	{
-    		case "db":
+    		case "sqlsrv":
+    		case "mysqli":
 
-    			$this->data = $this->do_query( sprintf( $this->queries["get"], $this->id ) );
+    			$this->data = $this->do_query( sprintf( $this->queries[ $this->cache_type ]["get"], $this->id ) );
 
     			break;
 
