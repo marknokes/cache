@@ -18,4 +18,9 @@ class db {
 			
 		    die('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
 	}
+
+	public function close_connection()
+	{
+		$this->connection->close();
+	}
 }

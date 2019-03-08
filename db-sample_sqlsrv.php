@@ -18,4 +18,9 @@ class db {
 
 		     die( print_r( sqlsrv_errors(), true) );
 	}
+
+	public function close_connection()
+	{
+		sqlsrv_close( $this->connection );
+	}
 }
