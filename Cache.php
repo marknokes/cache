@@ -137,7 +137,7 @@ class Cache
 				$this->$key = $value;
 		}
 
-		$hash = hash( 'md5', $this->cache_key );
+		$hash = isset( $this->cache_key ) ? hash( 'md5', $this->cache_key ): "";
 
 		$this->id = $hash;
 
@@ -164,6 +164,11 @@ class Cache
 		else
 
 			return true;
+	}
+
+	public function get_file_cache_dir()
+	{
+		return $this->cache_path;
 	}
 
 	/**
@@ -202,29 +207,35 @@ class Cache
  	* @param str $query The SQL query
  	* @return obj Object representing the data, false if query fails
  	*/
-    private function do_query( $query )
+    public function do_query( $query )
     {
     	if ( "sqlsrv" === $this->cache_type )
     	{
-			$stmt = sqlsrv_prepare( $this->db_connection, $query );
+			if( $stmt = sqlsrv_prepare( $this->db_connection, $query ) )
+			{
+				if( false === $stmt )
 
-			if( !$stmt )
+					die( print_r( sqlsrv_errors(), true) );
 
-			    die( print_r( sqlsrv_errors(), true) );
+				$result = sqlsrv_execute( $stmt );
 
-			$result = sqlsrv_execute( $stmt );
+				if( $result === false )
 
-			if( $result === false )
+					die( print_r( sqlsrv_errors(), true) );
 
-			  die( print_r( sqlsrv_errors(), true) );
+				$obj = new stdClass();
 
-			$obj = sqlsrv_fetch_object( $stmt );
+				while ($row = sqlsrv_fetch_array( $stmt, SQLSRV_FETCH_ASSOC) )
+		        {
+		            $obj->items[] = (object)$row;
+		        }
+			}
     	}
     	elseif( "mysqli" === $this->cache_type )
     	{
 			if ( $stmt = $this->db_connection->prepare( $query ) )
 			{	
-				if ( $stmt === false )
+				if ( false === $stmt )
 
 				    die( $this->db_connection->error );
 				
@@ -232,7 +243,15 @@ class Cache
 
 				$result = $stmt->get_result();
 
-				$obj = $result ? $result->fetch_object(): false;
+				if( isset( $result->num_rows ) )
+				{
+					$obj = new stdClass();
+
+					while ($row = $result->fetch_array(MYSQLI_ASSOC))
+			        {
+			            $obj->items[] = (object)$row;
+			        }
+				}
 			}
     	}
 
