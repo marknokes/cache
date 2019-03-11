@@ -259,20 +259,22 @@ class Cache
 
     			if( "" !== $id && file_exists( $id ) )
 					
-					$return =  unlink( $id );
+					$return = unlink( $id );
 
 				else {
 					
-					$errors = array();
+					$errors = 0;
 
-					foreach ( glob( $this->get_file_cache_dir() . "\\*cache*" ) as $filename )
+					$pattern = $this->get_file_cache_dir() . "\\*" . $this->cache_prefix . "*";
+
+					foreach ( glob( $pattern ) as $filename )
 					{
 						if( false === unlink( $filename ) )
 
-							$errors[] = "Failed to delete $filename";
+							$errors += 1;
 					}
 
-					return sizeof( $errors ) === 0;
+					return $errors === 0;
 				}
 
     			break;
