@@ -42,7 +42,7 @@ class Cache
     *
     * @var str
     */
-    private $cache_type = "";
+    public $cache_type = "";
 
     /**
     * Should the content be cached? This option should be set in the content HTML as a data parameter, i.e., no-cache="true"
@@ -107,8 +107,9 @@ class Cache
 	*/
 	private $queries = array(
 		"sqlsrv" => array(
-			"get" => "SELECT * FROM cache_data WHERE id = '%1\$s'",
-			"set" => "IF EXISTS (SELECT id FROM cache_data WHERE id = '%1\$s')
+			"get" 		=> "SELECT * FROM cache_data",
+			"get_by_id" => "SELECT * FROM cache_data WHERE id = '%1\$s'",
+			"set" 		=> "IF EXISTS (SELECT id FROM cache_data WHERE id = '%1\$s')
 						  BEGIN
 						     UPDATE cache_data SET last_run = %2\$d, cache_content = '%3\$s' WHERE id = '%1\$s'
 						  END
@@ -116,14 +117,22 @@ class Cache
 						  BEGIN
 						     INSERT INTO cache_data (id, last_run, cache_content)
 						     VALUES ('%1\$s', %2\$d, '%3\$s')
-						  END"
+						  END",
+			"delete"	=> "DELETE FROM cache_data WHERE id = '%1\$s'"
 		),
 		"mysqli" => array(
-			"get" => "SELECT * FROM cache_data WHERE id = '%1\$s'",
-			"set" => "INSERT INTO cache_data (id, last_run, cache_content)
+			"get" 		=> "SELECT * FROM cache_data",
+			"get_by_id" => "SELECT * FROM cache_data WHERE id = '%1\$s'",
+			"set" 		=> "INSERT INTO cache_data (id, last_run, cache_content)
 					 	VALUES ('%1\$s', %2\$d, '%3\$s')
-					 	ON DUPLICATE KEY UPDATE last_run = VALUES(last_run), cache_content = VALUES(cache_content);"
+					 	ON DUPLICATE KEY UPDATE last_run = VALUES(last_run), cache_content = VALUES(cache_content);",
+			"delete"	=> "DELETE FROM cache_data WHERE id = '%1\$s'"
 		)
+	);
+
+	public $errors = array(
+		"db_errors" => array(),
+		"ext_errors" => array()
 	);
 
 	public function __construct( $config )
@@ -147,12 +156,13 @@ class Cache
 
 			$this->cache_path = "" !== $this->cache_path ? $this->cache_path : sys_get_temp_dir();
 
-			$this->cache_file = $this->cache_path . "\\" . $this->cache_prefix . $hash;
+			$this->cache_file = $this->cache_path . "\\" . $this->cache_prefix . $this->id;
 		}
 
 		if( !$this->has_cache_type_support() )
 
-			die("The $this->cache_type extension is not loaded.");
+			array_push( $this->errors["ext_errors"], "The $this->cache_type extension is not loaded.");
+
 	}
 
 	private function has_cache_type_support()
@@ -201,6 +211,36 @@ class Cache
     	return apcu_exists( $this->id ) ? json_decode( apcu_fetch( $this->id ) ) : false;
     }
 
+    public function delete_by_id( $id = "" )
+    {
+    	$return = false;
+
+    	switch( $this->cache_type )
+    	{
+    		case "sqlsrv":
+    		case "mysqli":
+    			$return = $this->do_query( sprintf( $this->queries[ $this->cache_type ]["delete"], $id ) );
+    			break;
+
+    		case "wincache":
+    			if( wincache_ucache_exists( $id ) )
+    				$return = wincache_ucache_delete( $id );
+    			break;
+
+    		case "apcu":
+				if( apcu_exists( $id ) )
+				    $return =  apcu_delete( $id );
+    			break;
+
+    		case "file":
+    			if( file_exists( $id ) )
+					$return =  unlink( $id );
+    			break;
+    	}
+
+    	return $return;
+    }
+
 	/**
  	* Query the database
  	* 
@@ -209,19 +249,23 @@ class Cache
  	*/
     public function do_query( $query )
     {
+    	if( !$this->db_connection )
+
+    		return false;
+
     	if ( "sqlsrv" === $this->cache_type )
     	{
 			if( $stmt = sqlsrv_prepare( $this->db_connection, $query ) )
 			{
 				if( false === $stmt )
 
-					die( print_r( sqlsrv_errors(), true) );
+					array_push( $this->errors['db_errors'], sqlsrv_errors() );
 
 				$result = sqlsrv_execute( $stmt );
 
 				if( $result === false )
 
-					die( print_r( sqlsrv_errors(), true) );
+					array_push( $this->errors['db_errors'], sqlsrv_errors() );
 
 				$obj = new stdClass();
 
@@ -387,14 +431,17 @@ class Cache
  	* 
  	* @return null
  	*/
-    public function get_cached_content()
+    public function get_cached_content( $get_all = false )
     {
     	switch( $this->cache_type )
     	{
     		case "sqlsrv":
     		case "mysqli":
-
-    			$this->data = $this->do_query( sprintf( $this->queries[ $this->cache_type ]["get"], $this->id ) );
+    			if( $get_all ) {
+					$this->data = $this->do_query( $this->queries[ $this->cache_type ]["get"] );
+    			} else {
+    				$this->data = $this->do_query( sprintf( $this->queries[ $this->cache_type ]["get_by_id"], $this->id ) );
+    			}
 
     			break;
 
@@ -415,10 +462,30 @@ class Cache
 				$this->data = $this->from_file_cache();
     	}
 
-    	$this->last_run = isset( $this->data->last_run ) ? $this->data->last_run : 0;
+    	if( isset( $this->data->items ) && sizeof( $this->data->items ) === 1 ) {
+    		$this->last_run = $this->data->items[0]->last_run;
+    	} elseif( isset( $this->data->last_run ) ) {
+    		$this->last_run = $this->data->last_run;
+    	} else {
+    		$this->last_run = 0;
+    	}
 
-    	$this->info =  isset( $this->data->last_run ) && !$this->no_cache ? date("Y-m-d h:i A", $this->data->last_run) . " using " . $this->cache_type . " storage" : "Content not retrieved from cache.";
+    	$this->info = isset( $this->last_run ) && !$this->no_cache ? date("Y-m-d h:i A", $this->last_run) . " using " . $this->cache_type . " storage" : "Content not retrieved from cache.";
 
-    	return isset( $this->data->cache_content ) && false === $this->cache_expired() ? $this->data->cache_content : "";
+    	if( isset( $this->data->items ) && true === $get_all )
+
+    		return $this->data->items;
+
+    	elseif( isset( $this->data->items[0]->cache_content ) && false === $this->cache_expired() )
+
+    		return $this->data->items[0]->cache_content;
+
+    	elseif( isset( $this->data->cache_content ) && false === $this->cache_expired() )
+
+    		return $this->data->cache_content;
+
+    	else 
+
+    		return "";
     }
 }
