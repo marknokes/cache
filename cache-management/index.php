@@ -16,7 +16,11 @@ $cache = new Cache( array(
 
 if( isset( $_GET["del_key"] ) )
 
-    $cache->delete_by_id( $_GET["del_key"] );
+    $cache->delete( $_GET["del_key"] );
+
+elseif( isset( $_GET["clear_all"] ) )
+
+	$cache->delete();
 
 $table_data = get_table_data( $cache, $date_format );
 
@@ -40,6 +44,9 @@ if ( isset( $db->connection ) )
 			<li class="nav-item"><a class="nav-link" href="?cache_type=file">File</a></li>
 		</ul>
 		<?php echo $table_data ? build_table( $table_data ): '<div class="alert alert-primary" role="alert">No data found.</div>'; ?>
+		<?php if( $table_data ) { ?>
+		<a href="?cache_type=<?=$cache_type?>&clear_all=1">[Clear All <?=$cache_type?> Entries]</a>
+		<?php } ?>
 	</div>
 </body>
 </html>

@@ -118,7 +118,8 @@ class Cache
 						     INSERT INTO cache_data (id, last_run, cache_content)
 						     VALUES ('%1\$s', %2\$d, '%3\$s')
 						  END",
-			"delete"	=> "DELETE FROM cache_data WHERE id = '%1\$s'"
+			"delete_by_id" => "DELETE FROM cache_data WHERE id = '%1\$s'",
+			"delete" 	=> "DELETE FROM cache_data"
 		),
 		"mysqli" => array(
 			"get" 		=> "SELECT * FROM cache_data",
@@ -126,7 +127,8 @@ class Cache
 			"set" 		=> "INSERT INTO cache_data (id, last_run, cache_content)
 					 	VALUES ('%1\$s', %2\$d, '%3\$s')
 					 	ON DUPLICATE KEY UPDATE last_run = VALUES(last_run), cache_content = VALUES(cache_content);",
-			"delete"	=> "DELETE FROM cache_data WHERE id = '%1\$s'"
+			"delete_by_id" => "DELETE FROM cache_data WHERE id = '%1\$s'",
+			"delete" 	=> "DELETE FROM cache_data"
 		)
 	);
 
@@ -211,7 +213,7 @@ class Cache
     	return apcu_exists( $this->id ) ? json_decode( apcu_fetch( $this->id ) ) : false;
     }
 
-    public function delete_by_id( $id = "" )
+    public function delete( $id = "" )
     {
     	$return = false;
 
@@ -219,22 +221,60 @@ class Cache
     	{
     		case "sqlsrv":
     		case "mysqli":
-    			$return = $this->do_query( sprintf( $this->queries[ $this->cache_type ]["delete"], $id ) );
+    			if( "" !== $id )
+
+    				$return = $this->do_query( sprintf( $this->queries[ $this->cache_type ]["delete_by_id"], $id ) );
+
+    			else
+
+    				$return = $this->do_query( $this->queries[ $this->cache_type ]["delete"] );
+
     			break;
 
     		case "wincache":
-    			if( wincache_ucache_exists( $id ) )
-    				$return = wincache_ucache_delete( $id );
+
+    			if( "" !== $id && wincache_ucache_exists( $id ) )
+
+	    			$return = wincache_ucache_delete( $id );
+
+	    		elseif( function_exists("wincache_ucache_clear") )
+
+					$return = wincache_ucache_clear();
+
     			break;
 
     		case "apcu":
-				if( apcu_exists( $id ) )
+
+				if( "" !== $id && apcu_exists( $id ) )
+
 				    $return =  apcu_delete( $id );
+
+				elseif( function_exists("apcu_clear_cache") )
+					
+					$return = apcu_clear_cache();
+
     			break;
 
     		case "file":
-    			if( file_exists( $id ) )
+
+    			if( "" !== $id && file_exists( $id ) )
+					
 					$return =  unlink( $id );
+
+				else {
+					
+					$errors = array();
+
+					foreach ( glob( $this->get_file_cache_dir() . "\\*cache*" ) as $filename )
+					{
+						if( false === unlink( $filename ) )
+
+							$errors[] = "Failed to delete $filename";
+					}
+
+					return sizeof( $errors ) === 0;
+				}
+
     			break;
     	}
 
