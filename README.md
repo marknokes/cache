@@ -1,4 +1,4 @@
-# cache
+# PHP User Cache
 
 A simple cache solution written in PHP. Available caching options include  WinCache, APCu, SQLSVR, MySQLi, or file (by default).
 
