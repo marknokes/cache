@@ -24,7 +24,7 @@ class Cache
     public $info = "";
 
     /**
-    * The content to deliver.
+    * The content to cache.
     *
     * @var str
     */
