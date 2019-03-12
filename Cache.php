@@ -164,11 +164,13 @@ class Cache
 
 	}
 
-	private function has_cache_type_support()
+	public function has_cache_type_support( $extension = "" )
 	{
-		if( "file" !== $this->cache_type )
+		$ext = "" !== $extension ? $extension: $this->cache_type;
+		
+		if( "file" !== $ext )
 
-			return extension_loaded( $this->cache_type );
+			return extension_loaded( $ext );
 
 		else
 

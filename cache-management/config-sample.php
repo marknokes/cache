@@ -13,3 +13,11 @@ $db_options = array(
 );
 
 $date_format = "F d, Y h:i:s A";
+
+$supported = array(
+    "wincache"  => "WinCache",
+    "apcu"      => "APCu",
+    "sqlsrv"    => "Sqlsrv",
+    "mysqli"    => "MySQLi",
+    "file"      => "File"
+);

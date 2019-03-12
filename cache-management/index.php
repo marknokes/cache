@@ -37,12 +37,15 @@ if ( isset( $db->connection ) )
 	<div class="container">
 		<h1>User Cache Management</h1>
 		<ul class="nav">
-			<li class="nav-item"><a class="nav-link" href="?cache_type=wincache">WinCache</a></li>
-			<li class="nav-item"><a class="nav-link" href="?cache_type=apcu">APCu</a></li>
-			<li class="nav-item"><a class="nav-link" href="?cache_type=sqlsrv">Sqlsrv</a></li>
-			<li class="nav-item"><a class="nav-link" href="?cache_type=mysqli">MySQLi</a></li>
-			<li class="nav-item"><a class="nav-link" href="?cache_type=file">File</a></li>
-		</ul>
+				<?php
+				foreach( $supported as $ext => $name ) {
+
+					if( $cache->has_cache_type_support( $ext ) )
+
+						echo "<li class=\"nav-item\"><a class=\"nav-link\" href=\"?cache_type=$ext\">$name</a></li>";
+				}
+				?>
+			</ul>
 		<?php
 		echo $table_data ? build_table( $table_data ): '<div class="alert alert-primary" role="alert">No data found.</div>';
 
