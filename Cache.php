@@ -132,10 +132,7 @@ class Cache
 		)
 	);
 
-	public $errors = array(
-		"db_errors" => array(),
-		"ext_errors" => array()
-	);
+	public $errors = array();
 
 	public function __construct( $config )
 	{
@@ -163,7 +160,7 @@ class Cache
 
 		if( !$this->has_cache_type_support() )
 
-			array_push( $this->errors["ext_errors"], "The $this->cache_type extension is not loaded.");
+			array_push( $this->errors, "The $this->cache_type extension is not loaded.");
 
 	}
 
@@ -300,14 +297,19 @@ class Cache
 			if( $stmt = sqlsrv_prepare( $this->db_connection, $query ) )
 			{
 				if( false === $stmt )
+				{
+					array_push( $this->errors, sqlsrv_errors() );
+					return;
+				}
 
-					array_push( $this->errors['db_errors'], sqlsrv_errors() );
 
 				$result = sqlsrv_execute( $stmt );
 
 				if( $result === false )
-
-					array_push( $this->errors['db_errors'], sqlsrv_errors() );
+				{
+					array_push( $this->errors, sqlsrv_errors() );
+					return;
+				}
 
 				$obj = new stdClass();
 
@@ -319,11 +321,11 @@ class Cache
     	}
     	elseif( "mysqli" === $this->cache_type )
     	{
-			if ( $stmt = $this->db_connection->prepare( $query ) )
+			if ( $stmt = @$this->db_connection->prepare( $query ) )
 			{	
 				if ( false === $stmt )
 
-				    die( $this->db_connection->error );
+					array_push( $this->errors, $this->db_connection->error );
 				
 				$stmt->execute();
 

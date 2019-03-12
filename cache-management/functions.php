@@ -27,6 +27,8 @@ function build_link( $key )
 
 function get_db_instance( $which_one, $db_options )
 {
+	$errors = array();
+
 	if(
 		( $which_one !== "mysqli" && $which_one !== "sqlsrv" ) ||
 		!isset( $db_options["db_config_ini"],
@@ -38,20 +40,16 @@ function get_db_instance( $which_one, $db_options )
 	$to_include = $db_options[ $which_one ]["db_class_path"];
 
 	if( !file_exists( $to_include ) )
-	{
-		echo "$to_include does not exist.<br />";
 
-		return false;
-	}
+		array_push( $errors, "$to_include does not exist." );
 
-	include $to_include;
+	else
+
+		include $to_include;
 
 	if( !class_exists("db") )
-	{
-		echo "db class not loaded<br />";
 
-		return false;
-	}
+		array_push( $errors, "db class not loaded." );
 
 	$db_config = file_exists( $db_options["db_config_ini"] ) ? parse_ini_file( $db_options["db_config_ini"], true ) : false;
 
@@ -61,34 +59,33 @@ function get_db_instance( $which_one, $db_options )
 	{
 		$db = new db( $db_config[ $ini_section ] );
 
-		if( !$db->connection )
-		{
-			echo "Error instantiating db class.<br />";
+		if( $db->errors )
 
-			return false;
+			array_push( $errors, $db->errors );
 
-		} else
-		{
+		else
+
 			return $db;
-		}
 	}
 	else
-	{
-		echo "Error in db configuration.<br />";
 
-		return false;
+		array_push( $errors, "Error in db configuration." );
+
+	if( $errors )
+	{
+		$return = new StdClass();
+
+		$return->errors = $errors;
+
+		return $return;
 	}
 }
 
 function get_table_data( $cache, $date_format )
 {
-	if( $cache->errors["ext_errors"] )
+	if( $cache->errors )
 
-		return $cache->errors["ext_errors"];
-
-	if( $cache->errors["db_errors"] )
-	
-		return $cache->errors["db_errors"];
+		return $cache;
 
 	$table_data = array();
 

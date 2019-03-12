@@ -43,10 +43,13 @@ if ( isset( $db->connection ) )
 			<li class="nav-item"><a class="nav-link" href="?cache_type=mysqli">MySQLi</a></li>
 			<li class="nav-item"><a class="nav-link" href="?cache_type=file">File</a></li>
 		</ul>
-		<?php echo $table_data ? build_table( $table_data ): '<div class="alert alert-primary" role="alert">No data found.</div>'; ?>
-		<?php if( $table_data ) { ?>
-		<a href="?cache_type=<?=$cache_type?>&clear_all=1">[Clear All <?=$cache_type?> Entries]</a>
-		<?php } ?>
+		<?php
+		echo $table_data ? build_table( $table_data ): '<div class="alert alert-primary" role="alert">No data found.</div>';
+
+		echo isset( $db->errors ) && is_array( $db->errors ) ? build_table( $db->errors ): "";
+
+		echo $table_data ? "<a href=\"?cache_type=<?=$cache_type?>&clear_all=1\">[Clear All <?=$cache_type?> Entries]</a>": "";
+		?>
 	</div>
 </body>
 </html>

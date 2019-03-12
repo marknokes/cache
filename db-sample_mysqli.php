@@ -4,6 +4,8 @@ class db {
 
 	public $connection;
 
+	public $errors = array();
+
 	private $db_connection_info;
 
 	public function __construct( $config = array() )
@@ -12,15 +14,23 @@ class db {
 
 			$this->$key = $value;
 
-		$this->connection = new mysqli( $this->Server, $this->db_connection_info["UID"], $this->db_connection_info["PWD"], $this->db_connection_info["Database"] );
+		$this->connection = @new mysqli(
+			$this->Server,
+			$this->db_connection_info["UID"],
+			$this->db_connection_info["PWD"],
+			$this->db_connection_info["Database"]
+		);
 
 		if ( $this->connection->connect_error )
-			
-		    die('Connect Error (' . $mysqli->connect_errno . ') ' . $mysqli->connect_error);
+		{
+			array_push( $this->errors, array( $this->connection->connect_errno => $this->connection->connect_error ) );
+
+			return $this;
+		}
 	}
 
 	public function close_connection()
 	{
-		$this->connection->close();
+		@$this->connection->close();
 	}
 }
