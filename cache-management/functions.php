@@ -41,13 +41,13 @@ function get_db_instance( $which_one, $db_options )
 
 	if( !file_exists( $to_include ) )
 
-		array_push( $errors, "$to_include does not exist." );
+		array_push( $errors, "$to_include [db_config_ini] does not exist." );
 
 	else
 
 		include $to_include;
 
-	if( !class_exists("db") )
+	if( !@class_exists("db") )
 
 		array_push( $errors, "db class not loaded." );
 
@@ -56,7 +56,7 @@ function get_db_instance( $which_one, $db_options )
 	$ini_section = $db_options[ $which_one ]["db_config_ini_section"];
 
 	if( $db_config && isset( $db_config[ $ini_section ] ) )
-	{
+	{	
 		$db = new db( $db_config[ $ini_section ] );
 
 		if( $db->errors )
