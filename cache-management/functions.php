@@ -102,6 +102,7 @@ function get_table_data( $cache, $date_format )
 				$date->modify("- $age seconds");
 				$table_value = array(
 					"created" 	  => $date->format( $date_format ),
+					"total_cache_uptime" => $entry['total_cache_uptime'],
 					"delete item" => build_link( $entry['key_name'] )
 				);
 
