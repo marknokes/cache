@@ -69,7 +69,7 @@ function get_db_instance( $which_one, $db_options )
 	}
 	else
 
-		array_push( $errors, "Error in db configuration." );
+		array_push( $errors, "Error in \$db_options configuration. Verify the .ini path set in db_config_ini exists and is configured properly." );
 
 	if( $errors )
 	{
