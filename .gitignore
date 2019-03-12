@@ -1,4 +1,4 @@
 cacheUCO.php
 config.php
-*.localhost.php
+*.localhost*
 header.php
