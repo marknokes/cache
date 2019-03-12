@@ -48,7 +48,7 @@ if ( isset( $db->connection ) )
 
 		echo isset( $db->errors ) && is_array( $db->errors ) ? build_table( $db->errors ): "";
 
-		echo $table_data ? "<a href=\"?cache_type=<?=$cache_type?>&clear_all=1\">[Clear All <?=$cache_type?> Entries]</a>": "";
+		echo $table_data && !isset( $table_data->errors ) ? "<a href=\"?cache_type=<?=$cache_type?>&clear_all=1\">[Clear All <?=$cache_type?> Entries]</a>": "";
 		?>
 	</div>
 </body>
