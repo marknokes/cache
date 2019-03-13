@@ -157,7 +157,7 @@ class Cache
 
 			$this->cache_path = "" !== $this->cache_path ? $this->cache_path : sys_get_temp_dir();
 
-			$this->cache_file = $this->cache_path . "\\" . $this->cache_prefix . $this->id;
+			$this->cache_file = $this->cache_path . "\\" . $this->cache_prefix . $this->id . ".json";
 		}
 
 		if( !$this->has_cache_type_support() )

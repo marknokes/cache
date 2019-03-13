@@ -102,8 +102,10 @@ function get_table_data( $cache, $date_format )
 				$date->modify("- $age seconds");
 				$table_value = array(
 					"created" 	  => $date->format( $date_format ),
-					"hitcount" => $entry['hitcount'],
-					"delete item" => build_link( $entry['key_name'] )
+					"size"		  => $entry["value_size"],
+					"ttl_seconds" => $entry["ttl_seconds"],
+					"hitcount" 	  => $entry["hitcount"],
+					"delete item" => build_link( $entry["key_name"] )
 				);
 
 				$table_data[ $entry["key_name"] ] = $table_value;
@@ -119,6 +121,10 @@ function get_table_data( $cache, $date_format )
 			{
 				$table_value = array(
 					"created" 	  => date( $date_format, $entry["creation_time"] ),
+					"modified"	  => date( $date_format, $entry["mtime"] ),
+					"accessed"	  => date( $date_format, $entry["access_time"] ),
+					"size"		  => $entry['mem_size'],
+					"ttl"		  => $entry["ttl"],
 					"num_hits"	  => $entry["num_hits"],
 					"delete item" => build_link( $entry['info'] )
 				);
@@ -153,6 +159,8 @@ function get_table_data( $cache, $date_format )
 			{
 				$table_value = array(
 					"created" 	  => date( $date_format, json_decode( file_get_contents( $filename ) )->last_run ),
+					"modified"	  => date( $date_format, filemtime( $filename ) ),
+					"accessed"	  => date( $date_format, fileatime( $filename ) ),
 					"delete item" => build_link( $filename )
 				);
 
