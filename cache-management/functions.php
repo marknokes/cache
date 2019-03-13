@@ -102,7 +102,7 @@ function get_table_data( $cache, $date_format )
 				$date->modify("- $age seconds");
 				$table_value = array(
 					"created" 	  => $date->format( $date_format ),
-					"total_cache_uptime" => $entry['total_cache_uptime'],
+					"hitcount" => $entry['hitcount'],
 					"delete item" => build_link( $entry['key_name'] )
 				);
 
@@ -119,6 +119,7 @@ function get_table_data( $cache, $date_format )
 			{
 				$table_value = array(
 					"created" 	  => date( $date_format, $entry["creation_time"] ),
+					"num_hits"	  => $entry["num_hits"],
 					"delete item" => build_link( $entry['info'] )
 				);
 
@@ -137,6 +138,7 @@ function get_table_data( $cache, $date_format )
 				{
 					$table_value = array(
 						"created"  	  => date( $date_format, $entry->last_run ),
+						"num_hits"	  => $entry->num_hits,
 						"delete item" => build_link( $entry->id )
 					);
 

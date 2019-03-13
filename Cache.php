@@ -107,28 +107,30 @@ class Cache
 	*/
 	private $queries = array(
 		"sqlsrv" => array(
-			"get" 		=> "SELECT * FROM cache_data",
-			"get_by_id" => "SELECT * FROM cache_data WHERE id = '%1\$s'",
-			"set" 		=> "IF EXISTS (SELECT id FROM cache_data WHERE id = '%1\$s')
-						  BEGIN
-						     UPDATE cache_data SET last_run = %2\$d, cache_content = '%3\$s' WHERE id = '%1\$s'
-						  END
-					  ELSE
-						  BEGIN
-						     INSERT INTO cache_data (id, last_run, cache_content)
-						     VALUES ('%1\$s', %2\$d, '%3\$s')
-						  END",
-			"delete_by_id" => "DELETE FROM cache_data WHERE id = '%1\$s'",
-			"delete" 	=> "DELETE FROM cache_data"
+			"get" 				=> "SELECT * FROM cache_data",
+			"get_by_id" 		=> "SELECT * FROM cache_data WHERE id = '%1\$s'",
+			"set" 				=> "IF EXISTS (SELECT id FROM cache_data WHERE id = '%1\$s')
+									  BEGIN
+									     UPDATE cache_data SET last_run = %2\$d, cache_content = '%3\$s', num_hits = num_hits + 1 WHERE id = '%1\$s'
+									  END
+								  	ELSE
+									  BEGIN
+									     INSERT INTO cache_data (id, last_run, cache_content, num_hits)
+									     VALUES ('%1\$s', %2\$d, '%3\$s', 0)
+									  END",
+			"delete_by_id" 		=> "DELETE FROM cache_data WHERE id = '%1\$s'",
+			"delete" 			=> "DELETE FROM cache_data",
+			"update_num_hits" 	=> "UPDATE cache_data SET num_hits = num_hits + 1 WHERE id = '%1\$s'"
 		),
 		"mysqli" => array(
-			"get" 		=> "SELECT * FROM cache_data",
-			"get_by_id" => "SELECT * FROM cache_data WHERE id = '%1\$s'",
-			"set" 		=> "INSERT INTO cache_data (id, last_run, cache_content)
-					 	VALUES ('%1\$s', %2\$d, '%3\$s')
-					 	ON DUPLICATE KEY UPDATE last_run = VALUES(last_run), cache_content = VALUES(cache_content);",
-			"delete_by_id" => "DELETE FROM cache_data WHERE id = '%1\$s'",
-			"delete" 	=> "DELETE FROM cache_data"
+			"get" 				=> "SELECT * FROM cache_data",
+			"get_by_id" 		=> "SELECT * FROM cache_data WHERE id = '%1\$s'",
+			"set" 				=> "INSERT INTO cache_data (id, last_run, cache_content, num_hits)
+					 				VALUES ('%1\$s', %2\$d, '%3\$s', 0)
+					 				ON DUPLICATE KEY UPDATE last_run = VALUES(last_run), cache_content = VALUES(cache_content), num_hits = VALUES(num_hits);",
+			"delete_by_id" 		=> "DELETE FROM cache_data WHERE id = '%1\$s'",
+			"delete" 			=> "DELETE FROM cache_data",
+			"update_num_hits" 	=> "UPDATE cache_data SET num_hits = num_hits + 1 WHERE id = '%1\$s'"
 		)
 	);
 
@@ -303,7 +305,6 @@ class Cache
 					array_push( $this->errors, sqlsrv_errors() );
 					return;
 				}
-
 
 				$result = sqlsrv_execute( $stmt );
 
@@ -487,6 +488,7 @@ class Cache
 					$this->data = $this->do_query( $this->queries[ $this->cache_type ]["get"] );
     			} else {
     				$this->data = $this->do_query( sprintf( $this->queries[ $this->cache_type ]["get_by_id"], $this->id ) );
+    				$this->do_query( sprintf( $this->queries[ $this->cache_type ]["update_num_hits"], $this->id ) );
     			}
 
     			break;
