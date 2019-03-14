@@ -3,7 +3,8 @@
 // Make a connection to your database here if you like
 include "db-sample.php";
 
-// Store your database settings in an .ini file somewhere
+// Store your database settings in an .ini file somewhere. If you used the provided SQL to create
+// your database, remember to create a user and assign them read/write priviliges to the db.
 $db_config = parse_ini_file( "db-config-sample.ini", true );
 
 // Instantiate the database object
