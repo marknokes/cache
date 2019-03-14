@@ -9,6 +9,13 @@ $db_config = parse_ini_file( "db-config-sample.ini", true );
 // Instantiate the database object
 $db = new db( $db_config['ini_section'] );
 
+if( $db->errors )
+{
+	print_r( $db->errors );
+
+	die;
+}
+
 // Be sure to comment out or remove the caching method you don't need!
 $config = array(
 	

@@ -3,8 +3,8 @@ SET AUTOCOMMIT = 0;
 START TRANSACTION;
 SET time_zone = "+00:00";
 
-CREATE DATABASE feedcache;
-USE feedcache;
+CREATE DATABASE php_ucache;
+USE php_ucache;
 
 CREATE TABLE `cache_data` (
   `id` varchar(50) NOT NULL,
