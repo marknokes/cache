@@ -1,3 +1,8 @@
+## Donation
+If you find this plugin useful, please consider making a donation. Thank you!
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=HQFGGDAGHHM22)
+
 # PHP User Cache
 
 A simple cache solution written in PHP. Available caching options include  WinCache, APCu, SQLSVR, MySQLi, or file (by default).
